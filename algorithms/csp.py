@@ -59,10 +59,32 @@ def backtracking_search(csp, domains=None, select_variable=None,
                 parent = {x: v for x, v in assignment.items() if x != variable}
                 trace.restore(parent, snapshot(parent), variable)
         return result
+      
+    def expand(assignment):
+        # Caso base, si todas las tareas tienen franja la asignación está completa.
+        if len(assignment) == len(csp.variables):
+            return assignment
 
-    # TODO: Add your code here
-    raise NotImplementedError
-    # FIN DEL BLOQUE DEL ESTUDIANTE
+        # Seleccion de la siguiente tarea pendiente según la estrategia configurada.
+        variable = choose(csp, assignment, domains)
+
+        # Recorrido de las franjas candidatas en el orden definido por ordered.
+        for value in ordered(csp, variable, assignment, domains):
+
+            # Validacion del candidato, debe ser compatible con la asignación parcial.
+            if consistent(variable, value, assignment):
+
+                # Copia independiente de la asignación para esta rama de la búsqueda.
+                child = dict(assignment)
+                child[variable] = value
+
+                # Llamada recursiva; si la rama encuentra solución se propaga hacia arriba.
+                result = search(child)
+                if result is not None:
+                    return result
+
+        # Ninguna franja funcionó para esta tarea, se retorna None para retroceder.
+        return None
 
     return search({})
 
