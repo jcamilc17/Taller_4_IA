@@ -100,10 +100,20 @@ def revise(csp, x, y, domains):
       entre ese par de tareas, respetando la dirección de las precedencias.
     - Si elimina elementos mientras recorre una lista, itere sobre una copia.
     """
-    # TODO: Add your code here
-    raise NotImplementedError
-    # FIN DEL BLOQUE DEL ESTUDIANTE
+    changed = False
 
+    # Recorrido sobre una copia de domains[x], ya que se eliminan elementos durante la iteración.
+    for value_x in list(domains[x]):
+
+        # Validacion de soporte, debe existir al menos un valor de y compatible con value_x.
+        if not any(csp.compatible(x, value_x, y, value_y) for value_y in domains[y]):
+
+            # Eliminacion del valor sin soporte y registro del cambio en el dominio.
+            domains[x].remove(value_x)
+            changed = True
+
+    # Retorno de True únicamente si se eliminó algún valor de domains[x].
+    return changed
 
 def ac3(csp, domains):
     """Punto 2: reduce domains; retorna False si detecta un dominio vacío.
@@ -115,9 +125,26 @@ def ac3(csp, domains):
       csp.neighbors[x] contiene los vecinos de x.
     - revise(csp, x, y, domains) retorna si modificó domains[x].
     """
-    # TODO: Add your code here
-    raise NotImplementedError
-    # FIN DEL BLOQUE DEL ESTUDIANTE
+    # Inicializacion de la cola con todos los arcos (x, y) del problema.
+    queue = deque((x, y) for x in csp.variables for y in csp.neighbors[x])
+
+    while queue:
+        x, y = queue.popleft()
+
+        # Revision del arco x -> y, solo se continúa si domains[x] cambió.
+        if revise(csp, x, y, domains):
+
+            # Validacion de consistencia, un dominio vacío indica que no hay solución.
+            if not domains[x]:
+                return False
+
+            # Reencolar los arcos (z, x), ya que la reducción de x puede quitar soporte a sus vecinos.
+            for z in csp.neighbors[x]:
+                if z != y:
+                    queue.append((z, x))
+
+    # Retorno de True, todos los arcos son consistentes (no garantiza que exista solución).
+    return True
 
 
 def select_unassigned_variable(csp, assignment, domains):
