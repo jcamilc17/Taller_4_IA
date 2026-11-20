@@ -156,8 +156,21 @@ def select_unassigned_variable(csp, assignment, domains):
     - csp.neighbors[x] contiene sus vecinos; csp.variables conserva el orden
       original para los desempates.
     """
-    # TODO: Add your code here
-    raise NotImplementedError
+    # Tareas pendientes, en el orden original de csp.variables
+    pending = [x for x in csp.variables if x not in assignment]
+
+    def key(x):
+        # MRV: franjas del dominio vigente compatibles con la asignación parcial
+        remaining = sum(1 for value in domains[x] if csp.consistent(x, value, assignment))
+
+        # Grado: vecinos aún sin asignar (se niega para preferir el mayor)
+        degree = sum(1 for y in csp.neighbors[x] if y not in assignment)
+
+        # Desempate final por la posición original de la variable
+        return (remaining, -degree, csp.variables.index(x))
+
+    # Tarea con menor MRV, mayor grado y menor índice original
+    return min(pending, key=key)
     # FIN DEL BLOQUE DEL ESTUDIANTE
 
 
@@ -174,6 +187,21 @@ def order_domain_values(csp, variable, assignment, domains):
     - csp.compatible(variable, valor, vecino, valor_vecino) comprueba cada par
       sin modificar los dominios.
     """
-    # TODO: Add your code here
-    raise NotImplementedError
+    # Candidatos: franjas del dominio vigente compatibles con la asignación parcial
+    candidates = [value for value in domains[variable]
+                  if csp.consistent(variable, value, assignment)]
+
+    # Vecinos pendientes con sus valores aún compatibles con la asignación parcial
+    neighbor_values = {
+        y: [w for w in domains[y] if csp.consistent(y, w, assignment)]
+        for y in csp.neighbors[variable] if y not in assignment
+    }
+
+    def ruled_out(value):
+        # LCV: cuántos valores de los vecinos pendientes quedarían descartados con value
+        return sum(1 for y, values in neighbor_values.items()
+                   for w in values if not csp.compatible(variable, value, y, w))
+
+    # sorted es estable: en empates conserva el orden original. Retorna una lista nueva
+    return sorted(candidates, key=ruled_out)
     # FIN DEL BLOQUE DEL ESTUDIANTE
